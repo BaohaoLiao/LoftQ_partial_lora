@@ -170,72 +170,9 @@ def quantize_and_save():
     else:
         raise NotImplementedError("Other models not supported yet.")
 
-    # LoRA Config
-    lora_config = LoraConfig(
-        task_type=task_type,
-        inference_mode=True,
-        r=args.rank,
-        lora_alpha=16 if task_type is TaskType.CAUSAL_LM else args.rank,
-        lora_dropout=0.1,
-        target_modules=target_modules,
-    )
 
-    # Obtain LoftQ model
-    lora_model = get_peft_model(model, lora_config)
-
-    # Quantize
-    def _low_rank_decomposition(weight, reduced_rank=32):
-        """
-        :param weight: The matrix to decompose, of shape (H, W) :param reduced_rank: the final rank :return:
-        """
-        matrix_dimension = len(weight.size())
-        assert matrix_dimension == 2, "Only Support 2D matrix"
-
-        # Use SVD to decompose a matrix, default full_matrices is False to save parameters
-        U, S, Vh = torch.linalg.svd(weight, full_matrices=False)
-
-        L = U @ (torch.sqrt(torch.diag(S)[:, 0:reduced_rank]))
-        R = torch.sqrt(torch.diag(S)[0:reduced_rank, :]) @ Vh
-
-        return {"L": L, "R": R, "U": U, "S": S, "Vh": Vh, "reduced_rank": reduced_rank}
-
-    def lora_init_hook(m, x, y, name):
-        print(f"========={name}==========")
-        if args.scaling:
-            scaling = m.scaling["default"]
-        else:
-            scaling = 1.0
-
-        dtype = m.weight.dtype
-        weight = m.weight.clone()
-        weight = weight.to(device=args.device, dtype=torch.float32)
-
-        res = weight.clone()
-        for i in range(args.iter):
-            torch.cuda.empty_cache()
-            qweight = bnb.nn.Params4bit(
-                res.to("cpu"),
-                requires_grad=False,
-                compress_statistics=False,
-                quant_type="nf4"
-            ).to(args.device)
-            dequantized_weight = bnb.functional.dequantize_4bit(
-                qweight.data,
-                qweight.quant_state,
-                quant_type="nf4"
-            )
-            res = (weight - dequantized_weight) / scaling
-
-            output = _low_rank_decomposition(res, reduced_rank=args.rank)
-            L, R = output["L"], output["R"]
-            res = weight - scaling * torch.mm(L, R)
-
-            print(f"Error for iter {i}: "
-                  f"{torch.norm(weight - dequantized_weight - scaling * torch.mm(L, R))}")
-
-        m.weight.data = dequantized_weight.to(device=args.device, dtype=dtype)
-        m.lora_A["default"].weight.data = R
-        m.lora_B["default"].weight.data = L
+    print("Original Model:")
+    print(model)
 
     def quantize_linear_hook(m, x, y, name):
         print(f"========={name}==========")
@@ -254,25 +191,38 @@ def quantize_and_save():
             quant_type="nf4"
         )
         m.weight.data = dequantized_weight.to(device=args.device, dtype=dtype)
-        print(f"Error: "
-              f"{torch.norm(weight - dequantized_weight)}")
+        print(f"Error: {torch.norm(weight - dequantized_weight)}")
 
 
     with torch.no_grad():
         hooks = []
-        for name, m in lora_model.named_modules():
-            if isinstance(m, torch.nn.Linear) and (not isinstance(m, lora.Linear)) and ("base_layer" not in name) and ("lora_" not in name):
-                print("Linear", name)
+        for name, m in model.named_modules():
+            if isinstance(m, torch.nn.Linear):
                 hooks.append(
                     m.register_forward_hook(
                         functools.partial(quantize_linear_hook, name=name))
                 )
 
         input_ids = torch.arange(1, 10).unsqueeze(0).to(args.device)
-        lora_model(input_ids)
+        model(input_ids)
 
         for hook in hooks:
             hook.remove()
+
+
+    # LoRA Config
+    lora_config = LoraConfig(
+        task_type=task_type,
+        inference_mode=True,
+        r=args.rank,
+        lora_alpha=16 if task_type is TaskType.CAUSAL_LM else args.rank,
+        lora_dropout=0.1,
+        target_modules=target_modules,
+    )
+
+    # Obtain LoftQ model
+    lora_model = get_peft_model(model, lora_config)
+    print(lora_model)
 
     # Save
     base_model = lora_model.get_base_model()
