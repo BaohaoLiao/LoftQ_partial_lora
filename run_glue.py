@@ -438,6 +438,8 @@ def main():
                     print(name)
                     param.requires_grad = False
 
+        logger.info(f"{model.print_trainable_parameters()}")
+
     logger.info(model)
 
     # Preprocessing the raw_datasets
