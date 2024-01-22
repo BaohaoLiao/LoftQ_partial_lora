@@ -428,7 +428,7 @@ def main():
 
         if model_args.freeze_attention:
             for name, param in model.named_parameters():
-                if "attention" in name:
+                if ("attention.self" in name) or ("attention.output.dense" in name):
                     print(name)
                     param.requires_grad = False
 
