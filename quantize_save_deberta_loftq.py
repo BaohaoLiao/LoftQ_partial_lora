@@ -211,7 +211,7 @@ def quantize_and_save():
     memory = []
     def lora_init_hook(m, x, y, name):
         if name in memory:
-            return
+            return y
         else:
             memory.append(name)
         print(f"========={name}==========")
