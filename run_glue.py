@@ -440,7 +440,12 @@ def main():
 
         logger.info(f"{model.print_trainable_parameters()}")
 
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name)
+
     logger.info(model)
+
 
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
