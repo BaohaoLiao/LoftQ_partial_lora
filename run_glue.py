@@ -436,9 +436,9 @@ def main():
                 if (("intermediate.dense" in name) or ("output.dense" in name)) and ("attention.output.dense" not in name):
                     param.requires_grad = False
 
-        #for name, param in model.named_parameters():
-        #    if "pooler" in name:
-        #        param.requires_grad = True
+        for name, param in model.named_parameters():
+            if "pooler" in name:
+                param.requires_grad = True
 
         logger.info(f"{model.print_trainable_parameters()}")
 
