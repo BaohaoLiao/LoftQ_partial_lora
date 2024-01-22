@@ -167,7 +167,8 @@ def quantize_and_save():
             device_map=args.device
         )
         task_type = TaskType.SEQ_CLS
-        target_modules = ["query_proj", "key_proj", "value_proj", "dense"]  # embeddings not supported by peft
+        target_modules = ["query_proj", "key_proj", "value_proj", "attention.output.dense", "intermediate.dense",
+                          "output.dense"]  # embeddings not supported by peft
     else:
         raise NotImplementedError("Other models not supported yet.")
 
