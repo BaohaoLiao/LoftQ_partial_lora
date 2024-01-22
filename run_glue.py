@@ -442,10 +442,10 @@ def main():
 
         logger.info(f"{model.print_trainable_parameters()}")
 
-    logger.info("Trainable parameters")
+    logger.info("Trainable parameters:")
     for name, param in model.named_parameters():
         if param.requires_grad:
-            print(name)
+            logger.info(name)
 
 
     logger.info(model)
