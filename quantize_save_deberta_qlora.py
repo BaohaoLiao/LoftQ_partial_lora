@@ -197,8 +197,7 @@ def quantize_and_save():
     with torch.no_grad():
         hooks = []
         for name, m in model.named_modules():
-            if isinstance(m, torch.nn.Linear):
-                print(name)
+            if isinstance(m, torch.nn.Linear) and not ("pooler" in name) and not ("classifier" in name):
                 hooks.append(
                     m.register_forward_hook(
                         functools.partial(quantize_linear_hook, name=name))
