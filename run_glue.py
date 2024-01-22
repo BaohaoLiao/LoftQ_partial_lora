@@ -438,14 +438,16 @@ def main():
                     print(name)
                     param.requires_grad = False
 
+        for name, param in model.named_parameters():
+            if "pooler" in name:
+                param.requires_grad = True
+                print(name)
+
         logger.info(f"{model.print_trainable_parameters()}")
 
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(name)
-
-        if ("pooler" in name) or ("classifier" in name):
-            print(name, param.requires_grad)
 
 
     logger.info(model)
