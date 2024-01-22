@@ -222,6 +222,14 @@ class ModelArguments:
         default=None,
         metadata={"help": "Path to the LoRA adapter."},
     )
+    freeze_attention: Optional[bool] = field(
+        default=False,
+        metadata={"help": ""},
+    )
+    freeze_mlp: Optional[bool] = field(
+        default=False,
+        metadata={"help": ""},
+    )
 
 
 def main():
@@ -417,6 +425,19 @@ def main():
             token=model_args.token,
         )
         logger.info(f"{model.print_trainable_parameters()}")
+
+        if model_args.freeze_attention:
+            for name, param in model.named_parameters():
+                if "attention" in name:
+                    print(name)
+                    param.requires_grad = False
+
+        if model_args.freeze_mlp:
+            for name, param in model.named_parameters():
+                if (("intermediate.dense" in name) or ("output.dense" in name)) and ("attention.output.dense" not in name):
+                    print(name)
+                    param.requires_grad = False
+
     logger.info(model)
 
     # Preprocessing the raw_datasets
