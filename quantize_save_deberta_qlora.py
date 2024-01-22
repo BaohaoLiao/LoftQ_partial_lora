@@ -198,6 +198,7 @@ def quantize_and_save():
         hooks = []
         for name, m in model.named_modules():
             if isinstance(m, torch.nn.Linear):
+                print(name)
                 hooks.append(
                     m.register_forward_hook(
                         functools.partial(quantize_linear_hook, name=name))
