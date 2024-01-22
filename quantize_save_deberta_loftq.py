@@ -208,7 +208,12 @@ def quantize_and_save():
 
         return {"L": L, "R": R, "U": U, "S": S, "Vh": Vh, "reduced_rank": reduced_rank}
 
+    memory = []
     def lora_init_hook(m, x, y, name):
+        if name in memory:
+            return
+        else:
+            memory.append(name)
         print(f"========={name}==========")
         if args.scaling:
             scaling = m.scaling["default"]
