@@ -31,6 +31,7 @@ from transformers import (
 from peft import LoraConfig, TaskType, get_peft_model
 from peft.tuners import lora
 import bitsandbytes as bnb
+from utils import NFQuantizer
 
 
 class Shell(nn.Module):
@@ -174,11 +175,18 @@ def quantize_and_save():
     print("Original Model:")
     print(model)
 
+    quantizer = NFQuantizer(
+        num_bits=args.bits,
+        device="cuda",
+        method="normal",
+        block_size=64
+    )
     def quantize_linear_hook(m, x, y, name):
         print(f"========={name}==========")
         dtype = m.weight.dtype
         weight = m.weight.clone()
         weight = weight.to(device=args.device, dtype=torch.float32)
+        """
         qweight = bnb.nn.Params4bit(
             weight.to("cpu"),
             requires_grad=False,
@@ -190,8 +198,11 @@ def quantize_and_save():
             qweight.quant_state,
             quant_type="nf4"
         )
-        m.weight.data = dequantized_weight.to(device=args.device, dtype=dtype)
-        print(f"Error: {torch.norm(weight - dequantized_weight)}")
+        """
+        q_weight, max_abs, shape = quantizer.quantize_block(weight)
+        deq_weight = quantizer.dequantize_block(q_weight, max_abs, shape)
+        m.weight.data = deq_weight.to(device=args.device, dtype=dtype)
+        print(f"Error: {torch.norm(weight - deq_weight)}")
 
 
     with torch.no_grad():
