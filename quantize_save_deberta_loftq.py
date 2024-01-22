@@ -246,7 +246,7 @@ def quantize_and_save():
     with torch.no_grad():
         hooks = []
         for name, m in lora_model.named_modules():
-            if isinstance(m, lora.Linear):
+            if isinstance(m, lora.Linear) and not ("pooler" in name) and not ("classifier" in name):
                 hooks.append(
                     m.register_forward_hook(
                         functools.partial(lora_init_hook, name=name))
