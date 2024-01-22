@@ -174,7 +174,6 @@ def quantize_and_save():
 
     print("Original Model:")
     print(model)
-    print(model.state_dict())
 
     quantizer = NFQuantizer(
         num_bits=args.bits,
@@ -220,8 +219,6 @@ def quantize_and_save():
 
         for hook in hooks:
             hook.remove()
-
-    print(model.state_dict())
 
     # LoRA Config
     lora_config = LoraConfig(
