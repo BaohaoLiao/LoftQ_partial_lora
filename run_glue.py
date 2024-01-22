@@ -429,22 +429,20 @@ def main():
         if model_args.freeze_attention:
             for name, param in model.named_parameters():
                 if ("attention.self" in name) or ("attention.output.dense" in name):
-                    print(name)
                     param.requires_grad = False
 
         if model_args.freeze_mlp:
             for name, param in model.named_parameters():
                 if (("intermediate.dense" in name) or ("output.dense" in name)) and ("attention.output.dense" not in name):
-                    print(name)
                     param.requires_grad = False
 
-        for name, param in model.named_parameters():
-            if "pooler" in name:
-                param.requires_grad = True
-                print(name)
+        #for name, param in model.named_parameters():
+        #    if "pooler" in name:
+        #        param.requires_grad = True
 
         logger.info(f"{model.print_trainable_parameters()}")
 
+    logger.info("Trainable parameters")
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(name)
