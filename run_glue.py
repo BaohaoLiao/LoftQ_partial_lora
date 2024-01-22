@@ -444,6 +444,10 @@ def main():
         if param.requires_grad:
             print(name)
 
+        if ("pooler" in name) or ("classifier" in name):
+            print(name, param.requires_grad)
+
+
     logger.info(model)
 
 
