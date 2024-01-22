@@ -446,6 +446,7 @@ def main():
         lora_alpha=32,
         lora_dropout=0.1,
         target_modules=target_modules,
+        init_lora_weights=True,
     )
     # Obtain LoftQ model
     model = peft.get_peft_model(model, lora_config)
