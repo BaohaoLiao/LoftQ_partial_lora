@@ -262,11 +262,13 @@ def quantize_and_save():
         hooks = []
         for name, m in lora_model.named_modules():
             if isinstance(m, lora.Linear):
+                print("LoRA", name)
                 hooks.append(
                     m.register_forward_hook(
                         functools.partial(lora_init_hook, name=name))
                 )
             elif isinstance(m, torch.nn.Linear) and (not isinstance(m, lora.Linear)) and ("base_layer" not in name) and ("lora_" not in name):
+                print("Linear", name)
                 hooks.append(
                     m.register_forward_hook(
                         functools.partial(quantize_linear_hook, name=name))
