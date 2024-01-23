@@ -230,6 +230,10 @@ class ModelArguments:
         default=False,
         metadata={"help": ""},
     )
+    train_qv: Optional[bool] = field(
+        default=False,
+        metadata={"help": ""},
+    )
 
 
 def main():
@@ -434,6 +438,11 @@ def main():
         if model_args.freeze_mlp:
             for name, param in model.named_parameters():
                 if (("intermediate.dense" in name) or ("output.dense" in name)) and ("attention.output.dense" not in name):
+                    param.requires_grad = False
+
+        if model_args.train_qv:
+            for name, param in model.named_parameters():
+                if ("intermediate.dense" in name) or ("output.dense" in name) or ("key" in name):
                     param.requires_grad = False
 
         for name, param in model.named_parameters():
